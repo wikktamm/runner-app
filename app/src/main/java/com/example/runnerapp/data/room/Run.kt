@@ -1,4 +1,4 @@
-package com.example.runnerapp.data
+package com.example.runnerapp.data.room
 
 import android.graphics.Bitmap
 import androidx.room.Entity
@@ -15,4 +15,8 @@ data class Run(
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Int? = null
+}
+
+enum class RunColumn {
+    timestamp, caloriesBurned, averageSpeedKMH, timeInMs, distanceInMeters
 }
