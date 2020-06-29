@@ -17,4 +17,9 @@ class RunConverters {
     fun toBitmap(byteArray: ByteArray) : Bitmap{
         return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
     }
+
+    @TypeConverter
+    fun fromRunColumnEnum(enum:RunColumn) : String {
+        return enum.name
+    }
 }
