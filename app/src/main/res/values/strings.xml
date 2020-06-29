@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Runner App</string>
+    <string name="google_maps_sdk_key">AIzaSyBCePCRstdXBquF_eehNw6IBWQLJYlWx0k</string>
+</resources>
