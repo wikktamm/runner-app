@@ -8,5 +8,5 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class StatisticsFragment : Fragment(R.layout.fragment_statistics) {
-    private val viewModel:StatisticsViewModel by viewModels()
+    private val viewModel: StatisticsViewModel by viewModels()
 }
