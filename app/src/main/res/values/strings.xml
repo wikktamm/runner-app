@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Runner App</string>
     <string name="google_maps_sdk_key">AIzaSyBCePCRstdXBquF_eehNw6IBWQLJYlWx0k</string>
+    <string name="prompt_permissions_needed">You need to provide these permissions to run the app</string>
     <string-array name="filter_options">
         <item>Date</item>
         <item>Running Time</item>
