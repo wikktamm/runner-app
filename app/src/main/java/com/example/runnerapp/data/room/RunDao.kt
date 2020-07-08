@@ -11,8 +11,7 @@ interface RunDao {
     @Delete
     suspend fun deleteRun(run: Run)
 
-    @Query(
-        "SELECT * FROM runs ORDER BY CASE WHEN :column = 'timestamp' THEN timestamp END DESC, CASE WHEN :column = 'timeInMs' THEN timeInMs END DESC, CASE WHEN :column = 'caloriesBurned' THEN caloriesBurned END DESC, CASE WHEN :column = 'averageSpeedKMH'  THEN averageSpeedKMH END DESC, CASE WHEN :column = 'distanceInMeters' THEN distanceInMeters END DESC")
+    @Query("SELECT * FROM runs ORDER BY CASE WHEN :column = 'TIMESTAMP' THEN timestamp END DESC, CASE WHEN :column = 'TIME_IN_MS' THEN timeInMs END DESC, CASE WHEN :column = 'CALORIES_BURNED' THEN caloriesBurned END DESC, CASE WHEN :column = 'AVG_SPEED_KMH'  THEN averageSpeedKMH END DESC, CASE WHEN :column = 'DISTANCE_IN_M' THEN distanceInMeters END DESC")
     fun getAllRunsSortedDesc(column: RunColumn): LiveData<List<Run>>
 
     @Query("SELECT SUM(distanceInMeters) FROM runs")

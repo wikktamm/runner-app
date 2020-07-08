@@ -11,13 +11,13 @@ class MainRepository @Inject constructor(private val runDao: RunDao) {
 
     suspend fun deleteRun(run: Run) = runDao.deleteRun(run)
 
-    fun getAllRunsSortedDescByTimestamp() = runDao.getAllRunsSortedDesc(RunColumn.timestamp)
+    fun getAllRunsSortedDescByTimestamp() = runDao.getAllRunsSortedDesc(RunColumn.TIMESTAMP)
     fun getAllRunsSortedDescByCaloriesBurned() =
-        runDao.getAllRunsSortedDesc(RunColumn.caloriesBurned)
+        runDao.getAllRunsSortedDesc(RunColumn.CALORIES_BURNED)
 
-    fun getAllRunsSortedDescByAvgSpeed() = runDao.getAllRunsSortedDesc(RunColumn.averageSpeedKMH)
-    fun getAllRunsSortedDescByTimeInMs() = runDao.getAllRunsSortedDesc(RunColumn.timeInMs)
-    fun getAllRunsSortedDescByDistance() = runDao.getAllRunsSortedDesc(RunColumn.distanceInMeters)
+    fun getAllRunsSortedDescByAvgSpeed() = runDao.getAllRunsSortedDesc(RunColumn.AVG_SPEED_KMH)
+    fun getAllRunsSortedDescByTimeInMs() = runDao.getAllRunsSortedDesc(RunColumn.TIME_IN_MS)
+    fun getAllRunsSortedDescByDistance() = runDao.getAllRunsSortedDesc(RunColumn.DISTANCE_IN_M)
 
     fun getTotalMeters() = runDao.getTotalMeters()
 

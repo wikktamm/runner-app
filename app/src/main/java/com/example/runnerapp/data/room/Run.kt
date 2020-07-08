@@ -18,5 +18,5 @@ data class Run(
 }
 
 enum class RunColumn {
-    timestamp, caloriesBurned, averageSpeedKMH, timeInMs, distanceInMeters
+    TIMESTAMP, CALORIES_BURNED, AVG_SPEED_KMH, TIME_IN_MS, DISTANCE_IN_M
 }

@@ -55,6 +55,11 @@ class TrackingService : LifecycleService() {
         })
     }
 
+    private fun setInitialValues() {
+        isTracking.postValue(false)
+        trackedPaths.postValue(mutableListOf())
+    }
+
     @SuppressLint("MissingPermission")
     private fun updateLocationRequests(isTracking: Boolean) {
         if (isTracking) {
@@ -82,7 +87,7 @@ class TrackingService : LifecycleService() {
                 result?.locations?.let { locations ->
                     for (location in locations) {
                         addPositionToPolyline(location)
-                        Timber.d("service started ${location.latitude} - ${location.longitude}")
+                        Timber.d("location tracked ${location.latitude} - ${location.longitude}")
                     }
                 }
             }
@@ -103,11 +108,6 @@ class TrackingService : LifecycleService() {
                 trackedPaths.postValue(this)
             }
         }
-    }
-
-    private fun setInitialValues() {
-        isTracking.postValue(false)
-        trackedPaths.postValue(mutableListOf())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
