@@ -7,8 +7,10 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.PendingIntent
+import android.location.Location
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.MutableLiveData
 import com.example.runnerapp.R
 import com.example.runnerapp.ui.activities.MainActivity
 import com.example.runnerapp.utils.Constants.ACTION_PAUSE_SERVICE
@@ -18,11 +20,46 @@ import com.example.runnerapp.utils.Constants.ACTION_STOP_SERVICE
 import com.example.runnerapp.utils.Constants.NOTIFICATION_CHANNEL_ID
 import com.example.runnerapp.utils.Constants.NOTIFICATION_CHANNEL_NAME
 import com.example.runnerapp.utils.Constants.NOTIFICATION_ID
+import com.google.android.gms.maps.model.LatLng
 import timber.log.Timber
+
+typealias Polyline = MutableList<LatLng>
+typealias Polylines = MutableList<Polyline>
 
 class TrackingService : LifecycleService() {
 
-    var firstRun = true
+    private var firstRun = true
+
+    companion object {
+        val isTracking = MutableLiveData<Boolean>()
+        val trackedPaths = MutableLiveData<Polylines>()
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        setInitialValues()
+    }
+
+    private fun addEmptyPolyline() {
+        trackedPaths.value?.apply {
+            add(mutableListOf())
+            trackedPaths.postValue(this)
+        } ?: trackedPaths.postValue(mutableListOf())
+    }
+
+    private fun addPositionToPolyline(location: Location?) {
+        location?.let{
+            trackedPaths.value?.apply {
+                last().add(LatLng(location.latitude, location.longitude))
+                trackedPaths.postValue(this)
+            }
+        }
+    }
+
+    private fun setInitialValues() {
+        isTracking.postValue(false)
+        trackedPaths.postValue(mutableListOf())
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.let {
@@ -43,7 +80,6 @@ class TrackingService : LifecycleService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
-
     //todo IMPORTANCE_LOW to avoid sounds with each notification
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
@@ -63,12 +99,11 @@ class TrackingService : LifecycleService() {
                 .setAutoCancel(false)
                 .setOngoing(true)
                 .setSmallIcon(R.drawable.ic_run)
-                .setContentTitle("Runner app")
+                .setContentTitle(getString(R.string.app_name))
                 .setContentText("00:00:00")
                 .setContentIntent(getMainActivityPendingIntent())
 
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
-
     }
 
     private fun getMainActivityPendingIntent() =
