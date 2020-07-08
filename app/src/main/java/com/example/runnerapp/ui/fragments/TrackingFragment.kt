@@ -7,8 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.runnerapp.R
 import com.example.runnerapp.services.TrackingService
-import com.example.runnerapp.utils.Constants
-import com.example.runnerapp.utils.Constants.ACTION_START_OR_RESUME
+import com.example.runnerapp.utils.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.runnerapp.viewmodels.MainViewModel
 import com.google.android.gms.maps.GoogleMap
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,7 +29,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     private fun initListeners() {
         btnToggleRun.setOnClickListener {
-            sendMessageToService(ACTION_START_OR_RESUME)
+            sendMessageToService(ACTION_START_OR_RESUME_SERVICE)
         }
     }
 
@@ -64,6 +63,11 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     override fun onDestroy() {
         super.onDestroy()
         mapView?.onDestroy()
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        mapView?.onLowMemory()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

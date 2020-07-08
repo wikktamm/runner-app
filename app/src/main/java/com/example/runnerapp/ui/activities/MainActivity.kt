@@ -1,11 +1,13 @@
 package com.example.runnerapp.ui.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.runnerapp.R
+import com.example.runnerapp.utils.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -14,14 +16,27 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        showTrackingFragmentIfNeeded(intent)
         setSupportActionBar(toolbar)
         bottomNavigationView.setupWithNavController(navHostFragment.findNavController())
         navHostFragment.findNavController().addOnDestinationChangedListener { _, destination, _ ->
-            when(destination.id){
-                R.id.statisticsFragment, R.id.runFragment, R.id.settingsFragment -> bottomNavigationView.visibility = View.VISIBLE
-                R.id.setupFragment, R.id.trackingFragment -> bottomNavigationView.visibility = View.GONE
+            when (destination.id) {
+                R.id.statisticsFragment, R.id.runFragment, R.id.settingsFragment -> bottomNavigationView.visibility =
+                    View.VISIBLE
+                R.id.setupFragment, R.id.trackingFragment -> bottomNavigationView.visibility =
+                    View.GONE
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        showTrackingFragmentIfNeeded(intent)
+    }
+
+    private fun showTrackingFragmentIfNeeded(intent: Intent?) {
+        if (intent?.action == ACTION_SHOW_TRACKING_FRAGMENT) {
+            navHostFragment.findNavController().navigate(R.id.action_global_trackingFragment)
         }
     }
 }
