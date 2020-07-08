@@ -1,5 +1,6 @@
 package com.example.runnerapp.services
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
@@ -8,18 +9,27 @@ import androidx.annotation.RequiresApi
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.PendingIntent
 import android.location.Location
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.example.runnerapp.R
 import com.example.runnerapp.ui.activities.MainActivity
 import com.example.runnerapp.utils.Constants.ACTION_PAUSE_SERVICE
 import com.example.runnerapp.utils.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import com.example.runnerapp.utils.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.runnerapp.utils.Constants.ACTION_STOP_SERVICE
+import com.example.runnerapp.utils.Constants.INTERVAL_AVG_LOCATION_REQUEST
+import com.example.runnerapp.utils.Constants.INTERVAL_FASTEST_LOCATION_REQUEST
 import com.example.runnerapp.utils.Constants.NOTIFICATION_CHANNEL_ID
 import com.example.runnerapp.utils.Constants.NOTIFICATION_CHANNEL_NAME
 import com.example.runnerapp.utils.Constants.NOTIFICATION_ID
+import com.example.runnerapp.utils.PermissionUtils
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
 import timber.log.Timber
 
@@ -29,6 +39,7 @@ typealias Polylines = MutableList<Polyline>
 class TrackingService : LifecycleService() {
 
     private var firstRun = true
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     companion object {
         val isTracking = MutableLiveData<Boolean>()
@@ -38,17 +49,55 @@ class TrackingService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         setInitialValues()
+        fusedLocationProviderClient = FusedLocationProviderClient(this)
+        isTracking.observe(this, Observer {
+            updateLocationRequests(it)
+        })
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun updateLocationRequests(isTracking: Boolean) {
+        if (isTracking) {
+            if (PermissionUtils.hasPermissions(this)) {
+                val locationRequest = LocationRequest().apply {
+                    interval = INTERVAL_AVG_LOCATION_REQUEST
+                    fastestInterval = INTERVAL_FASTEST_LOCATION_REQUEST
+                    priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+                }
+                fusedLocationProviderClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+                )
+            }
+        } else {
+            fusedLocationProviderClient.removeLocationUpdates(locationCallback)
+        }
+    }
+
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(result: LocationResult?) {
+            super.onLocationResult(result)
+            if (isTracking.value!!) {
+                result?.locations?.let { locations ->
+                    for (location in locations) {
+                        addPositionToPolyline(location)
+                        Timber.d("service started ${location.latitude} - ${location.longitude}")
+                    }
+                }
+            }
+        }
     }
 
     private fun addEmptyPolyline() {
         trackedPaths.value?.apply {
             add(mutableListOf())
             trackedPaths.postValue(this)
-        } ?: trackedPaths.postValue(mutableListOf())
+        } ?: trackedPaths.postValue(mutableListOf(mutableListOf()))
     }
 
     private fun addPositionToPolyline(location: Location?) {
-        location?.let{
+        location?.let {
             trackedPaths.value?.apply {
                 last().add(LatLng(location.latitude, location.longitude))
                 trackedPaths.postValue(this)
@@ -91,6 +140,8 @@ class TrackingService : LifecycleService() {
     }
 
     private fun startForegroundService() {
+        addEmptyPolyline()
+        isTracking.postValue(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel()
         }
