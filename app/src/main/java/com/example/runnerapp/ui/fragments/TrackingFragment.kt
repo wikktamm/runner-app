@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.example.runnerapp.R
 import com.example.runnerapp.services.Polyline
@@ -14,6 +15,7 @@ import com.example.runnerapp.utils.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.runnerapp.utils.Constants.MAP_CAMERA_ZOOM
 import com.example.runnerapp.utils.Constants.POLYLINE_COLOR
 import com.example.runnerapp.utils.Constants.POLYLINE_WIDTH
+import com.example.runnerapp.utils.FormatUtils
 import com.example.runnerapp.viewmodels.MainViewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -22,6 +24,7 @@ import com.google.android.gms.maps.model.PolylineOptions
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_tracking.*
 import timber.log.Timber
+import java.text.Format
 
 @AndroidEntryPoint
 class TrackingFragment : Fragment(R.layout.fragment_tracking) {
@@ -30,6 +33,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     private var isTracking = false
     private var trackedPaths = mutableListOf<Polyline>()
+    private var timePassedInMs = 0L
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -47,10 +51,14 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
             updateTracking(it)
         })
         TrackingService.trackedPaths.observe(viewLifecycleOwner, Observer {
-            Timber.d("new point")
             trackedPaths = it
             drawLastPolyline()
             zoomToCurrentLocation()
+        })
+        TrackingService.totalTimeInMs.observe(viewLifecycleOwner, Observer {
+            timePassedInMs = it
+            val formattedTime = FormatUtils.getFormattedTime(timePassedInMs, true)
+            tvTimer.text = formattedTime
         })
     }
 
@@ -67,10 +75,9 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     private fun drawLastPolyline() {
         if (trackedPaths.isNotEmpty() && trackedPaths.last().size > 1) {
-            val preLastPoint = trackedPaths.last()[trackedPaths.last().size-2]
+            val preLastPoint = trackedPaths.last()[trackedPaths.last().size - 2]
             val lastPoint = trackedPaths.last().last()
             createAndDrawPoly(preLastPoint, lastPoint)
-            Timber.d("i am drawing it")
         }
     }
 
@@ -98,7 +105,12 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
     private fun zoomToCurrentLocation() {
         if (trackedPaths.isNotEmpty() && trackedPaths.last().size >= 1) {
-            map?.animateCamera(CameraUpdateFactory.newLatLngZoom(trackedPaths.last().last(), MAP_CAMERA_ZOOM))
+            map?.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    trackedPaths.last().last(),
+                    MAP_CAMERA_ZOOM
+                )
+            )
         }
     }
 

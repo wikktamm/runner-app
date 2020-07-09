@@ -18,6 +18,7 @@ object Constants {
 
     const val INTERVAL_AVG_LOCATION_REQUEST = 6000L
     const val INTERVAL_FASTEST_LOCATION_REQUEST = 3000L
+    const val INTERVAL_STOPWATCH_UPDATE = 50L
 
     const val POLYLINE_COLOR = Color.BLACK
     const val POLYLINE_WIDTH = 8f

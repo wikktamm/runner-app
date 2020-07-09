@@ -22,6 +22,7 @@ import com.example.runnerapp.utils.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.runnerapp.utils.Constants.ACTION_STOP_SERVICE
 import com.example.runnerapp.utils.Constants.INTERVAL_AVG_LOCATION_REQUEST
 import com.example.runnerapp.utils.Constants.INTERVAL_FASTEST_LOCATION_REQUEST
+import com.example.runnerapp.utils.Constants.INTERVAL_STOPWATCH_UPDATE
 import com.example.runnerapp.utils.Constants.NOTIFICATION_CHANNEL_ID
 import com.example.runnerapp.utils.Constants.NOTIFICATION_CHANNEL_NAME
 import com.example.runnerapp.utils.Constants.NOTIFICATION_ID
@@ -31,6 +32,10 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 typealias Polyline = MutableList<LatLng>
@@ -38,13 +43,25 @@ typealias Polylines = MutableList<Polyline>
 
 class TrackingService : LifecycleService() {
 
-    private var firstRun = true
-    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-
     companion object {
         val isTracking = MutableLiveData<Boolean>()
         val trackedPaths = MutableLiveData<Polylines>()
+        val totalTimeInMs = MutableLiveData<Long>()
     }
+
+    private var firstRun = true
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    private var totalTimeInS = MutableLiveData<Long>()
+    private var isTimerRunning = false
+    private var timeStarted = 0L
+    private var timeRun = 0L
+
+    //running "one polyline" took that amount of ms
+    private var singleRun = 0L
+
+    //used for updating notification content
+    private var passedSecondsTimestamp = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -58,6 +75,27 @@ class TrackingService : LifecycleService() {
     private fun setInitialValues() {
         isTracking.postValue(false)
         trackedPaths.postValue(mutableListOf())
+        totalTimeInMs.postValue(0L)
+        totalTimeInS.postValue(0L)
+    }
+
+    private fun startTimer() {
+        addEmptyPolyline()
+        isTracking.postValue(true)
+        isTimerRunning = true
+        timeStarted = System.currentTimeMillis()
+        CoroutineScope(Dispatchers.Main).launch {
+            while (isTracking.value!!) {
+                singleRun = System.currentTimeMillis() - timeStarted
+                totalTimeInMs.postValue(singleRun + timeRun)
+                if (totalTimeInMs.value!! >= passedSecondsTimestamp + 1000L) {
+                    totalTimeInS.postValue(totalTimeInS.value!! + 1)
+                    passedSecondsTimestamp += 1000L
+                }
+                delay(INTERVAL_STOPWATCH_UPDATE)
+            }
+            timeRun += singleRun
+        }
     }
 
     @SuppressLint("MissingPermission")
@@ -121,7 +159,7 @@ class TrackingService : LifecycleService() {
                         startForegroundService()
                     } else {
                         Timber.d("service resumed")//todo
-                        startForegroundService()
+                        startTimer()
                     }
                 }
                 ACTION_PAUSE_SERVICE -> {
@@ -135,6 +173,7 @@ class TrackingService : LifecycleService() {
     }
 
     private fun pauseService() {
+        isTimerRunning = false
         isTracking.postValue(false)
     }
 
@@ -149,8 +188,7 @@ class TrackingService : LifecycleService() {
     }
 
     private fun startForegroundService() {
-        addEmptyPolyline()
-        isTracking.postValue(true)
+        startTimer()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel()
         }
