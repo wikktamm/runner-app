@@ -103,8 +103,9 @@ class TrackingService : LifecycleService() {
 
     private fun addPositionToPolyline(location: Location?) {
         location?.let {
+            val pos = LatLng(location.latitude, location.longitude)
             trackedPaths.value?.apply {
-                last().add(LatLng(location.latitude, location.longitude))
+                last().add(pos)
                 trackedPaths.postValue(this)
             }
         }
@@ -119,14 +120,22 @@ class TrackingService : LifecycleService() {
                         Timber.d("service started")
                         startForegroundService()
                     } else {
-                        Timber.d("service resumed")
+                        Timber.d("service resumed")//todo
+                        startForegroundService()
                     }
                 }
-                ACTION_PAUSE_SERVICE -> Timber.d("service paused")
+                ACTION_PAUSE_SERVICE -> {
+                    Timber.d("service paused")
+                    pauseService()
+                }
                 ACTION_STOP_SERVICE -> Timber.d("service stopped")
             }
         }
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun pauseService() {
+        isTracking.postValue(false)
     }
 
     //todo IMPORTANCE_LOW to avoid sounds with each notification

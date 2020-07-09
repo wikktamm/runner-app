@@ -1,5 +1,7 @@
 package com.example.runnerapp.utils
 
+import android.graphics.Color
+
 object Constants {
     const val RUN_DATABASE_NAME = "run_db"
 
@@ -16,4 +18,8 @@ object Constants {
 
     const val INTERVAL_AVG_LOCATION_REQUEST = 6000L
     const val INTERVAL_FASTEST_LOCATION_REQUEST = 3000L
+
+    const val POLYLINE_COLOR = Color.BLACK
+    const val POLYLINE_WIDTH = 8f
+    const val MAP_CAMERA_ZOOM = 16f
 }
