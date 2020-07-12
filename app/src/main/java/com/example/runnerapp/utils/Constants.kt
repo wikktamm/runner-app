@@ -6,6 +6,8 @@ object Constants {
     const val RUN_DATABASE_NAME = "run_db"
 
     const val REQUEST_CODE_PERMISSIONS = 1
+    const val REQUEST_CODE_SERVICE_PAUSE = 2
+    const val REQUEST_CODE_SERVICE_START_OR_RESUME = 3
 
     const val ACTION_START_OR_RESUME_SERVICE = "ACTION_START_OR_RESUME"
     const val ACTION_STOP_SERVICE = "ACTION_STOP"

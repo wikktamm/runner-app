@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.PendingIntent
+import android.content.Context
 import android.location.Location
 import android.os.Looper
 import androidx.core.app.NotificationCompat
@@ -15,9 +16,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.example.runnerapp.R
-import com.example.runnerapp.ui.activities.MainActivity
 import com.example.runnerapp.utils.Constants.ACTION_PAUSE_SERVICE
-import com.example.runnerapp.utils.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import com.example.runnerapp.utils.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.runnerapp.utils.Constants.ACTION_STOP_SERVICE
 import com.example.runnerapp.utils.Constants.INTERVAL_AVG_LOCATION_REQUEST
@@ -26,6 +25,9 @@ import com.example.runnerapp.utils.Constants.INTERVAL_STOPWATCH_UPDATE
 import com.example.runnerapp.utils.Constants.NOTIFICATION_CHANNEL_ID
 import com.example.runnerapp.utils.Constants.NOTIFICATION_CHANNEL_NAME
 import com.example.runnerapp.utils.Constants.NOTIFICATION_ID
+import com.example.runnerapp.utils.Constants.REQUEST_CODE_SERVICE_PAUSE
+import com.example.runnerapp.utils.Constants.REQUEST_CODE_SERVICE_START_OR_RESUME
+import com.example.runnerapp.utils.FormatUtils
 import com.example.runnerapp.utils.PermissionUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -52,13 +54,15 @@ class TrackingService : LifecycleService() {
         val totalTimeInMs = MutableLiveData<Long>()
     }
 
-    private var firstRun = true
-
     @Inject
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     @Inject
-    lateinit var notificationBuilder: NotificationCompat.Builder
+    lateinit var baseNotificationBuilder: NotificationCompat.Builder
+
+    lateinit var currentNotificationBuilder: NotificationCompat.Builder
+
+    private var firstRun = true
 
     private var totalTimeInS = MutableLiveData<Long>()
     private var isTimerRunning = false
@@ -74,8 +78,10 @@ class TrackingService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         setInitialValues()
+        currentNotificationBuilder = baseNotificationBuilder
         isTracking.observe(this, Observer {
             updateLocationRequests(it)
+            updateNotification(it)
         })
     }
 
@@ -199,10 +205,47 @@ class TrackingService : LifecycleService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel()
         }
-
-
-        startForeground(NOTIFICATION_ID, notificationBuilder.build())
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        totalTimeInS.observe(this, Observer {
+            val notification = currentNotificationBuilder
+                .setContentText(FormatUtils.getFormattedTime(it * 1000L))
+            notificationManager.notify(NOTIFICATION_ID, notification.build())
+        })
+        startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
     }
 
+    @SuppressLint("RestrictedApi")
+    private fun updateNotification(isTracking: Boolean) {
+        val actionText = if (isTracking) "Pause" else "Start"
+        val pendingIntent = if (isTracking) {
+            val intent = Intent(this, TrackingService::class.java).apply {
+                action = ACTION_PAUSE_SERVICE
+            }
+            PendingIntent.getService(
+                this,
+                REQUEST_CODE_SERVICE_PAUSE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        } else {
+            val intent = Intent(this, TrackingService::class.java).apply {
+                action = ACTION_START_OR_RESUME_SERVICE
+            }
+            PendingIntent.getService(
+                this,
+                REQUEST_CODE_SERVICE_START_OR_RESUME,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
 
+        //This way we remove all of the notifications
+        currentNotificationBuilder.mActions.clear()
+        currentNotificationBuilder = baseNotificationBuilder
+
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(NOTIFICATION_ID, currentNotificationBuilder.build())
+    }
 }
