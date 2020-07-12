@@ -32,15 +32,18 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 typealias Polyline = MutableList<LatLng>
 typealias Polylines = MutableList<Polyline>
 
+@AndroidEntryPoint
 class TrackingService : LifecycleService() {
 
     companion object {
@@ -50,7 +53,12 @@ class TrackingService : LifecycleService() {
     }
 
     private var firstRun = true
-    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    @Inject
+    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
+    @Inject
+    lateinit var notificationBuilder: NotificationCompat.Builder
 
     private var totalTimeInS = MutableLiveData<Long>()
     private var isTimerRunning = false
@@ -66,7 +74,6 @@ class TrackingService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         setInitialValues()
-        fusedLocationProviderClient = FusedLocationProviderClient(this)
         isTracking.observe(this, Observer {
             updateLocationRequests(it)
         })
@@ -192,20 +199,10 @@ class TrackingService : LifecycleService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel()
         }
-        val notificationBuilder =
-            NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-                .setAutoCancel(false)
-                .setOngoing(true)
-                .setSmallIcon(R.drawable.ic_run)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText("00:00:00")
-                .setContentIntent(getMainActivityPendingIntent())
+
 
         startForeground(NOTIFICATION_ID, notificationBuilder.build())
     }
 
-    private fun getMainActivityPendingIntent() =
-        PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).also {
-            it.action = ACTION_SHOW_TRACKING_FRAGMENT
-        }, PendingIntent.FLAG_UPDATE_CURRENT)
+
 }
