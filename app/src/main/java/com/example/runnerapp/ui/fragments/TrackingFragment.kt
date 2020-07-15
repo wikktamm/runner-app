@@ -2,7 +2,8 @@ package com.example.runnerapp.ui.fragments
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
+import android.view.*
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.MutableLiveData
@@ -12,6 +13,7 @@ import com.example.runnerapp.services.Polyline
 import com.example.runnerapp.services.TrackingService
 import com.example.runnerapp.utils.Constants.ACTION_PAUSE_SERVICE
 import com.example.runnerapp.utils.Constants.ACTION_START_OR_RESUME_SERVICE
+import com.example.runnerapp.utils.Constants.ACTION_STOP_SERVICE
 import com.example.runnerapp.utils.Constants.MAP_CAMERA_ZOOM
 import com.example.runnerapp.utils.Constants.POLYLINE_COLOR
 import com.example.runnerapp.utils.Constants.POLYLINE_WIDTH
@@ -35,6 +37,17 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     private var trackedPaths = mutableListOf<Polyline>()
     private var timePassedInMs = 0L
 
+    private var menu: Menu? = null
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        setHasOptionsMenu(true)
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         mapView.onCreate(savedInstanceState)
@@ -46,9 +59,44 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
         observeOnChanges()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.toolbar_tracking_menu, menu)
+        this.menu = menu
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.miCancelTracking -> {
+                showDialogCancelRun()
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun showDialogCancelRun() {
+        val dialog = AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
+            .setTitle(getString(R.string.q_cancel_the_run))
+            .setMessage(getString(R.string.q_want_to_cancel_run))
+            .setIcon(R.drawable.ic_delete_black)
+            .setPositiveButton("Yes") { _, _ ->
+                cancelRun()
+            }
+            .setNegativeButton("No") { dialogInterface, _ ->
+
+            }
+            .create()
+        dialog.show()
+    }
+
+    private fun cancelRun() {
+        sendMessageToService(ACTION_STOP_SERVICE)
+    }
+
     private fun observeOnChanges() {
         TrackingService.isTracking.observe(viewLifecycleOwner, Observer {
             updateTracking(it)
+            updateMenuIcon(it)
         })
         TrackingService.trackedPaths.observe(viewLifecycleOwner, Observer {
             trackedPaths = it
@@ -60,6 +108,12 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
             val formattedTime = FormatUtils.getFormattedTime(timePassedInMs, true)
             tvTimer.text = formattedTime
         })
+    }
+
+    private fun updateMenuIcon(isTracking: Boolean?) {
+        isTracking?.let {
+            menu?.getItem(0)?.isVisible = it
+        }
     }
 
     private fun updateTracking(isTracking: Boolean) {

@@ -10,11 +10,14 @@ import com.example.runnerapp.R
 import com.example.runnerapp.utils.Constants.ACTION_SHOW_TRACKING_FRAGMENT
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        var sth = GlobalScope.launch {  }
         setContentView(R.layout.activity_main)
         showTrackingFragmentIfNeeded(intent)
         setSupportActionBar(toolbar)

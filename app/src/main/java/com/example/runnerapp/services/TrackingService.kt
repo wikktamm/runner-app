@@ -179,7 +179,12 @@ class TrackingService : LifecycleService() {
                     Timber.d("service paused")
                     pauseService()
                 }
-                ACTION_STOP_SERVICE -> Timber.d("service stopped")
+                ACTION_STOP_SERVICE -> {
+                    Timber.d("service stopped")
+                    setInitialValues()
+                    stopForeground(true)
+                    stopSelf()
+                }
             }
         }
         return super.onStartCommand(intent, flags, startId)
@@ -243,6 +248,7 @@ class TrackingService : LifecycleService() {
         //This way we remove all of the notifications
         currentNotificationBuilder.mActions.clear()
         currentNotificationBuilder = baseNotificationBuilder
+        //todo enable to pause/resume from the notificatino
 
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
