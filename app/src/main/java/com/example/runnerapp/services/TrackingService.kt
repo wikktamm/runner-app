@@ -3,14 +3,14 @@ package com.example.runnerapp.services
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Intent
-import android.os.Build
-import androidx.annotation.RequiresApi
 import android.app.NotificationManager.IMPORTANCE_LOW
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.location.Location
+import android.os.Build
 import android.os.Looper
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
@@ -54,6 +54,8 @@ class TrackingService : LifecycleService() {
         val totalTimeInMs = MutableLiveData<Long>()
     }
 
+    private var serviceKilled: Boolean = false
+
     @Inject
     lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
@@ -81,7 +83,9 @@ class TrackingService : LifecycleService() {
         currentNotificationBuilder = baseNotificationBuilder
         isTracking.observe(this, Observer {
             updateLocationRequests(it)
-            updateNotification(it)
+            if (isTracking.value!!) {
+                updateNotification(it)
+            }
         })
     }
 
@@ -181,9 +185,7 @@ class TrackingService : LifecycleService() {
                 }
                 ACTION_STOP_SERVICE -> {
                     Timber.d("service stopped")
-                    setInitialValues()
-                    stopForeground(true)
-                    stopSelf()
+                    killService()
                 }
             }
         }
@@ -193,6 +195,15 @@ class TrackingService : LifecycleService() {
     private fun pauseService() {
         isTimerRunning = false
         isTracking.postValue(false)
+    }
+
+    private fun killService() {
+        serviceKilled = true
+        firstRun = true
+        pauseService()
+        setInitialValues()
+        stopForeground(true)
+        stopSelf()
     }
 
     //todo IMPORTANCE_LOW to avoid sounds with each notification
@@ -213,9 +224,11 @@ class TrackingService : LifecycleService() {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         totalTimeInS.observe(this, Observer {
-            val notification = currentNotificationBuilder
-                .setContentText(FormatUtils.getFormattedTime(it * 1000L))
-            notificationManager.notify(NOTIFICATION_ID, notification.build())
+            if (!serviceKilled) {
+                val notification = currentNotificationBuilder
+                    .setContentText(FormatUtils.getFormattedTime(it * 1000L))
+                notificationManager.notify(NOTIFICATION_ID, notification.build())
+            }
         })
         startForeground(NOTIFICATION_ID, baseNotificationBuilder.build())
     }
@@ -253,5 +266,11 @@ class TrackingService : LifecycleService() {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, currentNotificationBuilder.build())
+
+        if (!serviceKilled) {
+            currentNotificationBuilder = baseNotificationBuilder
+                .addAction(R.drawable.ic_pause, actionText, pendingIntent)
+            notificationManager.notify(NOTIFICATION_ID, currentNotificationBuilder.build())
+        }
     }
 }
