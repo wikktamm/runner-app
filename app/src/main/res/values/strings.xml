@@ -5,6 +5,9 @@
     <string name="cancel_run">Cancel run</string>
     <string name="q_cancel_the_run">Cancel the run?</string>
     <string name="q_want_to_cancel_run">Do you want to cancel this run? You will lose its data.</string>
+    <string name="prompt_run_saved_successfully">Run saved successfully</string>
+    <string name="stop">Stop</string>
+    <string name="start">Start</string>
     <string-array name="filter_options">
         <item>Date</item>
         <item>Running Time</item>
