@@ -133,7 +133,7 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
             btnFinishRun.visibility = View.GONE
         } else {
             btnToggleRun.text = getString(R.string.start)
-            if(timePassedInMs>0){
+            if (timePassedInMs > 0) {
                 btnFinishRun.visibility = View.VISIBLE
             }
         }

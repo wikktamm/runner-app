@@ -7,8 +7,11 @@ import com.example.runnerapp.data.repositories.MainRepository
 import com.example.runnerapp.data.room.Run
 import kotlinx.coroutines.launch
 
-class MainViewModel @ViewModelInject constructor(val repo: MainRepository) : ViewModel(){
-    fun insertRun(run: Run){
+class MainViewModel @ViewModelInject constructor(val repo: MainRepository) : ViewModel() {
+
+    val runs = repo.getAllRunsSortedDescByTimeInMs()
+
+    fun insertRun(run: Run) {
         viewModelScope.launch {
             repo.insertRun(run)
         }
