@@ -1,17 +1,67 @@
 package com.example.runnerapp.ui.fragments
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
 import androidx.fragment.app.Fragment
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.example.runnerapp.R
+import com.example.runnerapp.utils.Constants.KEY_NAME
+import com.example.runnerapp.utils.Constants.KEY_USERS_DATA_GIVEN
+import com.example.runnerapp.utils.Constants.KEY_WEIGHT
+import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_setup.*
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class SetupFragment : Fragment(R.layout.fragment_setup) {
+
+    @Inject
+    lateinit var sharedPrefs: SharedPreferences
+
+    @set:Inject
+    var wasDataAlreadyGiven: Boolean = false
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        if (wasDataAlreadyGiven) {
+            val navOptions = NavOptions.Builder().setPopUpTo(R.id.setupFragment, true).build()
+            findNavController().navigate(R.id.action_setupFragment_to_runFragment, savedInstanceState, navOptions)
+        }
         tvContinue.setOnClickListener {
-            findNavController().navigate(R.id.action_setupFragment_to_runFragment)
+            val wasDataSaved = writeUsersDataToSharedPrefs()
+            if (wasDataSaved) {
+                findNavController().navigate(R.id.action_setupFragment_to_runFragment)
+            } else {
+                Snackbar.make(
+                    requireView(),
+                    "You must enter your name and weight",
+                    Snackbar.LENGTH_SHORT
+                ).show()
+            }
         }
     }
+
+
+    private fun writeUsersDataToSharedPrefs(): Boolean {
+        val name = etName.content()
+        val weight = etWeight.content()
+        if (name.isEmpty() || weight.isEmpty()) return false
+        sharedPrefs.edit()
+            .putString(KEY_NAME, name)
+            .putFloat(KEY_WEIGHT, weight.toFloat())
+            .putBoolean(KEY_USERS_DATA_GIVEN, true)
+            .apply()
+        val toolbarText = "Let's go, $name"
+        requireActivity().tvToolbarTitle.text = toolbarText
+        return true
+    }
+}
+
+private fun EditText.content(): String {
+    return text.toString()
 }

@@ -34,6 +34,7 @@ import kotlinx.android.synthetic.main.fragment_tracking.*
 import timber.log.Timber
 import java.text.Format
 import java.util.*
+import javax.inject.Inject
 import kotlin.math.round
 
 @AndroidEntryPoint
@@ -41,8 +42,8 @@ class TrackingFragment : Fragment(R.layout.fragment_tracking) {
     private val viewModel: MainViewModel by viewModels()
     private var map: GoogleMap? = null
 
-    //todo
-    private var weight: Float = 50.1F
+    @set:Inject
+    var weight: Float = 50.1F
     private var isTracking = false
     private var trackedPaths = mutableListOf<Polyline>()
     private var timePassedInMs = 0L
