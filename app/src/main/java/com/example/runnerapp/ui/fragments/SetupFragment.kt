@@ -11,6 +11,7 @@ import com.example.runnerapp.R
 import com.example.runnerapp.utils.Constants.KEY_NAME
 import com.example.runnerapp.utils.Constants.KEY_USERS_DATA_GIVEN
 import com.example.runnerapp.utils.Constants.KEY_WEIGHT
+import com.example.runnerapp.utils.content
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
@@ -60,8 +61,4 @@ class SetupFragment : Fragment(R.layout.fragment_setup) {
         requireActivity().tvToolbarTitle.text = toolbarText
         return true
     }
-}
-
-private fun EditText.content(): String {
-    return text.toString()
 }
